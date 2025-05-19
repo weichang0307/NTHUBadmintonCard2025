@@ -65,7 +65,8 @@ switch (name_) {
         break;
     case "廖國艮":
         document.querySelector(".card-body").innerHTML = `
-            畢業快樂！<br>            
+            畢業快樂！<br>
+            謝謝你出去比賽的時候帶我去吃好吃的 <br>
             祝事事順心！<br>
         `;
         break;
