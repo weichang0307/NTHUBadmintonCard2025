@@ -1,0 +1,242 @@
+:root {
+    --background_color: #070;
+    --background_color2: #050;
+    --player_color: #222;
+    --card_color: #fff;
+
+    /* 位置變數 */
+    --head-x: 100px;
+    /* 尺寸變數 */
+    --head-width: 30px;
+    --head-height: 30px;
+
+    --body-width: 20px;
+    --body-height: 40px;
+
+    --arm-width: 10px;
+    --arm-height: 30px;
+
+    --leg-width: 12px;
+    --leg-height: 40px;
+
+    --racket-width: 6px;
+    --racket-height: 50px;
+
+    /* 相對位置變數 */
+    --head-left: calc(var(--head-x) - var(--head-width) / 2);
+    --head-top: 0px;
+    --body-left: calc(var(--head-x) - var(--body-width) / 2);
+    --body-top: calc(var(--head-top) + var(--head-height) * 1.1);
+    --arm1-top: calc(var(--body-top)*1.1);
+    --arm2-top: calc(var(--arm-height) * 0.85);
+    --leg1-top: calc(var(--body-top) + var(--body-height) * 0.85);
+    --leg2-top: calc(var(--leg-height) * 0.85);
+    --arm-gap-x: calc(var(--body-width) * 1.5);
+    --arm-offset-x: calc(var(--head-x) - var(--arm-gap-x) / 2 - var(--arm-width) / 2);
+    --leg-gap-x: calc(var(--body-width) / 1.5);
+    --leg-offset-x: calc(var(--head-x) - var(--leg-gap-x) / 2 - var(--leg-width) / 2);
+    --racket-left: calc(var(--arm-width) / 2 - var(--racket-width) / 2);
+    --racket-top: calc(var(--arm-height) * 0.85);
+
+}
+@font-face {
+  font-family: 'MyFont';
+  src: url('font1.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+body {
+  background-color: var(--background_color);
+  margin: 0;
+  overflow: hidden;
+}
+.topbar {
+    left: 0px;
+    top: 0px;
+    width: 400px;
+    height: 600px;
+    position: absolute;
+    background-color: var(--background_color);
+    transform-origin: top left;
+}
+.window {
+    left: 0px;
+    top: 0px;
+    width: 400px;
+    height: 600px;
+    position: absolute;
+    transform-origin: top left;
+}
+.card {
+    left: 0px;
+    top: 0px;
+    width: 350px;
+    height: 600px;
+    position: absolute;
+    margin: 20px auto;
+    background: var(--card_color);
+    transform-origin: top left;
+}
+.to {
+  position: absolute;
+  top: 40px;
+  left: 25px;
+    font-family: 'MyFont';
+  font-size: 22px;
+}
+
+.by {
+  position: absolute;
+  bottom: 40px;
+  right: 25px;
+    font-family: 'MyFont';
+  font-size: 22px;
+  text-align: right;
+}
+
+.card-body {
+    padding:  100px 30px 10px 30px;
+    font-family: 'MyFont';
+    font-size: 20px;
+    letter-spacing: 2px;
+    line-height: 2;
+}
+.player {
+    position: absolute;
+    transform-origin: top left;
+    top: 300px;
+    left: -50px;
+}
+
+/* 頭 */
+.head {
+  position: absolute;
+  top: var(--head-top);
+  left: var(--head-left);
+  width: var(--head-width);
+  height: var(--head-height);
+  background: var(--player_color);
+  border-radius: 50%;
+}
+
+/* 身體 */
+.body {
+  position: absolute;
+  top: var(--body-top);
+  left: var(--body-left);
+  width: var(--body-width);
+  height: var(--body-height);
+  background: var(--player_color);
+  border-radius: 10px;
+}
+
+/* 左手 */
+.handl1, .handl2 {
+  position: absolute;
+  width: var(--arm-width);
+  height: var(--arm-height);
+  background: var(--player_color);
+  border-radius: 5px;
+  transform-origin: top center;
+}
+.handl1 {
+  top: var(--arm1-top);
+  left: var(--arm-offset-x);
+}
+.handl2 {
+  top: var(--arm2-top);
+}
+
+/* 右手 */
+.handr1, .handr2 {
+  position: absolute;
+  width: var(--arm-width);
+  height: var(--arm-height);
+  background: var(--player_color);
+  border-radius: 5px;
+  transform-origin: top center;
+}
+.handr1 {
+  top: var(--arm1-top);
+  left: calc(var(--arm-offset-x) + var(--arm-gap-x));
+}
+.handr2 {
+  top: var(--arm2-top);
+}
+
+/* 左腳 */
+.legl1, .legl2 {
+  position: absolute;
+  width: var(--leg-width);
+  height: var(--leg-height);
+  background: var(--player_color);
+  border-radius: 5px;
+  transform-origin: top center;
+}
+.legl1 {
+  top: var(--leg1-top);
+  left: var(--leg-offset-x);
+}
+.legl2 {
+  top: var(--leg2-top);
+}
+
+/* 右腳 */
+.legr1, .legr2 {
+  position: absolute;
+  width: var(--leg-width);
+  height: var(--leg-height);
+  background: var(--player_color);
+  border-radius: 5px;
+  transform-origin: top center;
+}
+.legr1 {
+  top: var(--leg1-top);
+  left: calc(var(--leg-offset-x) + var(--leg-gap-x));
+}
+.legr2 {
+  top: var(--leg2-top);
+}
+
+/* 拍子 */
+.racket {
+  position: absolute;
+  top: var(--racket-top);
+  left: var(--racket-left);
+  width: var(--racket-width);
+  height: var(--racket-height);
+  background: var(--player_color);
+  border-radius: 3px;
+  transform-origin: top center;
+}
+
+.racket_face {
+  position: absolute;
+  top: calc(var(--racket-height) * 0.7);
+  left: calc(var(--racket-left) - var(--racket-width) / 2 * 4);
+  width: calc(var(--racket-width) * 3);
+  height: calc(var(--racket-height) * 0.5);
+  background: var(--background_color2); /* 內部顏色 */
+  border-radius: 50%;
+  border: 4px solid var(--player_color); /* 外框顏色與粗細 */
+}
+.svg_racket {
+  width: 100px;
+  height: auto;
+  position: absolute;
+  top: 200px;
+  left: 150px;
+}
+.svg_racket {
+  transform: scale(0.5);
+  transform-origin: center center;
+}
+
+.shuttle {
+  width: 50px;
+  height: auto;
+  position: absolute;
+  top: 0;
+  left: -100px;
+  fill: var(--card_color);
+}
