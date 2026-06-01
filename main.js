@@ -28,8 +28,6 @@ animate_prepare(tl_, d1);
 animate_jump(tl_, d2);
 animate_smash(tl_, d3);
 
-setupStartListener();
-
 function setupStartListener() {
     if (name_ === "蕭珮心") {
         if (!unlockXiaoPeiXinCard()) {
@@ -56,6 +54,8 @@ document.querySelector(".by").innerHTML = "By: " + "張博崴";
 
 const crypto_text = "jLSKiJgX7xmwfjWs+GNn4sCM0a/JYFceQenRXDiG97OQy0btprIpp/twzeqdZnOhTJaj+OOHoJWBNxuRyqCv/Ry1gxz0cqLj93COeiicqJfWSf/sv8km6siH34fHjhw2KIuGssx4evJWrdi+0s0XFuUbbW0abJqT4Rq6OPECbxExiru7ZrFNZrzv7O0thZaGjtsYGHeM1wRzkpslJxrXcALK8DCebfHLXYU+7qpiwa2RCCtitswgcM7C5hwhZo06dduAkusFL9laOBkr5QMMPTfMoJmWqRAAoLw+6PKYFwScK05fnX0GdthfkcCIbT7GL25p0oS+M5SetP9fwW/Sh+5P2W0hzYwtuL6Niyq/iMX+K3wXlQBwsRyw7FnR1VMQ"
 const crypto_iv_setting = "0";
+
+setupStartListener();
 
 switch (name_) {
     case "楊濟安":
