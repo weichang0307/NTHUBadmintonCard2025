@@ -54,7 +54,8 @@ function startAnimationOnce() {
 document.querySelector(".to").innerHTML = "To: " + name_;
 document.querySelector(".by").innerHTML = "By: " + "張博崴";
 
-const crypto_text = "U2FsdGVkX1/IRohwl2ivy+i9VXjVXmzYWfFN69VkxyPHNwBR4czFpwsKJ7kkkzwi31X5qynFP9jsAK7QADUlBbzxdHcOeVRmNF50QVjAFPIn3ec+4qhSATeEuOJCqELYmhibngPleJlTFGfoJEsp9uzolxhtRuZEM/wElA4LSjF0vXAd6qxoPKTiPDenwuqlkHD3/E8IxDhiAJbZ9TIz8smTTehKNUj2ffo+xX2tqnTfi5U7MzQ02FEtJMz949ATA8V5yMfIr/8lhRZPxaZSQijpp1rPR+B5GxcDKSYQPdvjqV0BPqXg/ovdildfVhXJYj4e9sRciN3dNxoA5g3tvFDhtKy0/+pL1aUcEp+p+6qy22v5AWS8pn3ymc9PXmDo";
+const crypto_text = "jLSKiJgX7xmwfjWs+GNn4sCM0a/JYFceQenRXDiG97OQy0btprIpp/twzeqdZnOhTJaj+OOHoJWBNxuRyqCv/Ry1gxz0cqLj93COeiicqJfWSf/sv8km6siH34fHjhw2KIuGssx4evJWrdi+0s0XFuUbbW0abJqT4Rq6OPECbxExiru7ZrFNZrzv7O0thZaGjtsYGHeM1wRzkpslJxrXcALK8DCebfHLXYU+7qpiwa2RCCtitswgcM7C5hwhZo06dduAkusFL9laOBkr5QMMPTfMoJmWqRAAoLw+6PKYFwScK05fnX0GdthfkcCIbT7GL25p0oS+M5SetP9fwW/Sh+5P2W0hzYwtuL6Niyq/iMX+K3wXlQBwsRyw7FnR1VMQ"
+const crypto_iv_setting = "0";
 
 switch (name_) {
     case "楊濟安":
@@ -269,16 +270,22 @@ function unlockXiaoPeiXinCard() {
     }
 
     try {
-        const bytes = CryptoJS.AES.decrypt(crypto_text, password);
-        const plaintext = bytes.toString(CryptoJS.enc.Utf8);
+        let plaintext = decryptCtrZeroPaddingBase64(crypto_text, password, crypto_iv_setting);
 
         if (!plaintext) {
-            console.error("[decrypt] empty plaintext after AES decrypt (likely wrong password or invalid ciphertext)");
-            window.alert("密碼錯誤");
+            console.warn("[decrypt] CTR/ZeroPadding result is empty, trying OpenSSL-compatible fallback");
+            const fallbackBytes = CryptoJS.AES.decrypt(crypto_text, password);
+            plaintext = fallbackBytes.toString(CryptoJS.enc.Utf8).replace(/\u0000+$/g, "");
+        }
+
+        if (!plaintext) {
+            console.error("[decrypt] empty plaintext after all decrypt attempts (wrong password or mismatched mode/iv/padding)");
+            window.alert("密碼錯誤或加密參數不一致");
             return false;
         }
 
         document.querySelector(".card-body").innerHTML = formatPlaintextForHtml(plaintext);
+        console.info("[decrypt] success");
         return true;
     } catch (error) {
         console.error("[decrypt] exception during AES decrypt:", error);
@@ -293,4 +300,36 @@ function formatPlaintextForHtml(text) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/\n/g, "<br>");
+}
+
+function decryptCtrZeroPaddingBase64(ciphertextBase64, keyText, ivSetting) {
+    const key = CryptoJS.enc.Utf8.parse(keyText);
+    const iv = buildIvWordArray(ivSetting);
+    const cipherParams = CryptoJS.lib.CipherParams.create({
+        ciphertext: CryptoJS.enc.Base64.parse(ciphertextBase64)
+    });
+
+    const bytes = CryptoJS.AES.decrypt(cipherParams, key, {
+        iv: iv,
+        mode: CryptoJS.mode.CTR,
+        padding: CryptoJS.pad.ZeroPadding
+    });
+
+    return bytes.toString(CryptoJS.enc.Utf8).replace(/\u0000+$/g, "");
+}
+
+function buildIvWordArray(ivSetting) {
+    if (ivSetting === "0") {
+        return CryptoJS.enc.Hex.parse("00000000000000000000000000000000");
+    }
+
+    if (/^[0-9a-fA-F]{32}$/.test(ivSetting)) {
+        return CryptoJS.enc.Hex.parse(ivSetting);
+    }
+
+    if (ivSetting.length === 16) {
+        return CryptoJS.enc.Utf8.parse(ivSetting);
+    }
+
+    throw new Error("Invalid IV setting. Use '0', 32-char hex, or 16-char text.");
 }
