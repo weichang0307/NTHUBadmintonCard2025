@@ -257,6 +257,14 @@ function windowResize() {
 function unlockXiaoPeiXinCard() {
     const password = window.prompt("請輸入密碼");
     if (!password) {
+        console.warn("[decrypt] cancelled or empty password input");
+        window.alert("未輸入密碼");
+        return false;
+    }
+
+    if (typeof CryptoJS === "undefined" || !CryptoJS.AES) {
+        console.error("[decrypt] CryptoJS AES is not available. Check script loading order.");
+        window.alert("解密元件未載入");
         return false;
     }
 
@@ -265,6 +273,7 @@ function unlockXiaoPeiXinCard() {
         const plaintext = bytes.toString(CryptoJS.enc.Utf8);
 
         if (!plaintext) {
+            console.error("[decrypt] empty plaintext after AES decrypt (likely wrong password or invalid ciphertext)");
             window.alert("密碼錯誤");
             return false;
         }
@@ -272,6 +281,7 @@ function unlockXiaoPeiXinCard() {
         document.querySelector(".card-body").innerHTML = formatPlaintextForHtml(plaintext);
         return true;
     } catch (error) {
+        console.error("[decrypt] exception during AES decrypt:", error);
         window.alert("解密失敗");
         return false;
     }
