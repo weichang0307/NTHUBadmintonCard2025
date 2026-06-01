@@ -50,6 +50,22 @@ body {
   margin: 0;
   overflow: hidden;
 }
+
+.start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background_color);
+  color: #fff;
+  font-family: 'MyFont', sans-serif;
+  font-size: 32px;
+  letter-spacing: 2px;
+  text-transform: lowercase;
+  cursor: pointer;
+}
 .topbar {
     left: 0px;
     top: 0px;

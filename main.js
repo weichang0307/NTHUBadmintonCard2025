@@ -2,7 +2,7 @@
 const params = new URLSearchParams(window.location.search);
 
 const name_ = params.get("name");
-const tl_ = gsap.timeline();
+const tl_ = gsap.timeline({ paused: true });
 const d0 = 0;
 const d1 = 1;
 const d2 = 0.4;
@@ -17,11 +17,26 @@ window.addEventListener("resize", () => {
     windowResize();
 });
 
+gsap.set(".card", {
+    x: width,
+    transformOrigin: "top left"
+});
+
 
 animate_init(tl_, d0);
 animate_prepare(tl_, d1);
 animate_jump(tl_, d2);
 animate_smash(tl_, d3);
+
+document.addEventListener("click", startAnimationOnce, { once: true });
+
+function startAnimationOnce() {
+    const startScreen = document.querySelector(".start-screen");
+    if (startScreen) {
+        startScreen.style.display = "none";
+    }
+    tl_.play(0);
+}
 
 document.querySelector(".to").innerHTML = "To: " + name_;
 document.querySelector(".by").innerHTML = "By: " + "張博崴";
@@ -95,8 +110,107 @@ switch (name_) {
             謝謝你都會找我打球<br>
             我會想念跟你的豆花局的<br>
             祝你能挺過老包的考驗在今年順利畢業！<br>
+
+            2026.06.30<br>
+            老哥所以你怎麽還沒畢業<br>
         `;
-        break;    
+        break;
+    case "蕭以勝":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "魏崇悅":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "鄭詠心":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "蕭珮心":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "謝昊恩":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "陳名":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "張家綺":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "林奕辰":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "涂冠宇":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "Vishal Mani":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "陳信遠":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "鄺苡萱":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "張所蓁":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "戴偉翔":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "劉育如":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
+    case "洪元甫":
+        document.querySelector(".card-body").innerHTML = `
+            畢業快樂！<br>
+            祝一切順利！<br>
+        `;
+        break;
 }
 
 function windowResize() {
