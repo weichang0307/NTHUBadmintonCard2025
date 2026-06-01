@@ -28,9 +28,13 @@ animate_prepare(tl_, d1);
 animate_jump(tl_, d2);
 animate_smash(tl_, d3);
 
-function setupStartListener() {
+const crypto_text_base64 = "6EPl/FFhzJcjEFgF5ZZky0z8EYBan6Eh/Bln6awoGIUqdXgReQdVIPvaJJN3pAH3V4hZJP7NNUOf0Vb3CcS5eMHHSiNasLRBF4+wU8dU0QpHUicIvpryvqwYnKGD/jMBkzmQnp4Q+h/dvaP05NPVb7KfV8HFp0N2yXThVlDyCgKZFRh+jTx1to+AODtm1FvDe+ZstvgTKjmgTY336aV+p7HWbMA93b0XShSSZH2i1wxwDjW6m7fzcyEGDoLunQ4EiKouqlPWBXuxmkSpuMarpgqPaaZ7b/CTncCmJwZ+miAPBldGugK7d+pYVtsJ6aGqyjPIi6/U/PP6qkQ0eyepvDu8oXHnnTwELFVGRYMfnCY="
+setupStartListener();
+
+async function setupStartListener() {
     if (name_ === "蕭珮心") {
-        if (!unlockXiaoPeiXinCard()) {
+        const unlocked = await unlockXiaoPeiXinCard();
+        if (!unlocked) {
             const startScreen = document.querySelector(".start-screen");
             if (startScreen) {
                 startScreen.innerHTML = "password required";
@@ -38,6 +42,7 @@ function setupStartListener() {
             return;
         }
     }
+
     document.addEventListener("click", startAnimationOnce, { once: true });
 }
 
@@ -52,10 +57,6 @@ function startAnimationOnce() {
 document.querySelector(".to").innerHTML = "To: " + name_;
 document.querySelector(".by").innerHTML = "By: " + "張博崴";
 
-const crypto_text = "jLSKiJgX7xmwfjWs+GNn4sCM0a/JYFceQenRXDiG97OQy0btprIpp/twzeqdZnOhTJaj+OOHoJWBNxuRyqCv/Ry1gxz0cqLj93COeiicqJfWSf/sv8km6siH34fHjhw2KIuGssx4evJWrdi+0s0XFuUbbW0abJqT4Rq6OPECbxExiru7ZrFNZrzv7O0thZaGjtsYGHeM1wRzkpslJxrXcALK8DCebfHLXYU+7qpiwa2RCCtitswgcM7C5hwhZo06dduAkusFL9laOBkr5QMMPTfMoJmWqRAAoLw+6PKYFwScK05fnX0GdthfkcCIbT7GL25p0oS+M5SetP9fwW/Sh+5P2W0hzYwtuL6Niyq/iMX+K3wXlQBwsRyw7FnR1VMQ"
-const crypto_iv_setting = "0";
-
-setupStartListener();
 
 switch (name_) {
     case "楊濟安":
@@ -151,7 +152,6 @@ switch (name_) {
         break;
     case "蕭珮心":
         document.querySelector(".card-body").innerHTML = `
-            請先輸入密碼<br>
         `;
         break;
     case "謝昊恩":
@@ -255,7 +255,13 @@ function windowResize() {
     });
 }
 
-function unlockXiaoPeiXinCard() {
+async function unlockXiaoPeiXinCard() {
+    if (!crypto_text_base64) {
+        console.error("[decrypt] crypto_text_base64 is empty");
+        window.alert("尚未設定密文");
+        return false;
+    }
+
     const password = window.prompt("請輸入密碼");
     if (!password) {
         console.warn("[decrypt] cancelled or empty password input");
@@ -263,35 +269,193 @@ function unlockXiaoPeiXinCard() {
         return false;
     }
 
-    if (typeof CryptoJS === "undefined" || !CryptoJS.AES) {
-        console.error("[decrypt] CryptoJS AES is not available. Check script loading order.");
-        window.alert("解密元件未載入");
+    if (!window.crypto || !window.crypto.subtle) {
+        console.error("[decrypt] Web Crypto API is not available");
+        window.alert("瀏覽器不支援解密功能");
         return false;
     }
 
     try {
-        let plaintext = decryptCtrZeroPaddingBase64(crypto_text, password, crypto_iv_setting);
-
+        const plaintext = await decryptAesGcmBase64(crypto_text_base64, password);
         if (!plaintext) {
-            console.warn("[decrypt] CTR/ZeroPadding result is empty, trying OpenSSL-compatible fallback");
-            const fallbackBytes = CryptoJS.AES.decrypt(crypto_text, password);
-            plaintext = fallbackBytes.toString(CryptoJS.enc.Utf8).replace(/\u0000+$/g, "");
-        }
-
-        if (!plaintext) {
-            console.error("[decrypt] empty plaintext after all decrypt attempts (wrong password or mismatched mode/iv/padding)");
-            window.alert("密碼錯誤或加密參數不一致");
+            console.error("[decrypt] empty plaintext after AES-GCM decrypt");
+            window.alert("密碼錯誤或密文格式不符");
             return false;
         }
 
         document.querySelector(".card-body").innerHTML = formatPlaintextForHtml(plaintext);
-        console.info("[decrypt] success");
+        console.info("[decrypt] success with AES-GCM");
         return true;
     } catch (error) {
-        console.error("[decrypt] exception during AES decrypt:", error);
+        console.error("[decrypt] exception during AES-GCM decrypt:", error);
         window.alert("解密失敗");
         return false;
     }
+}
+
+async function decryptAesGcmBase64(ciphertextBase64, password) {
+    const payload = base64ToBytes(ciphertextBase64);
+    console.info("[decrypt] base64 decoded bytes:", payload.length);
+    if (payload.length < 16) {
+        throw new Error("Ciphertext is too short");
+    }
+
+    const tried = [];
+    const attempts = [
+        // direct key styles
+        { name: "iv12+raw16", layout: "ivHead", ivLength: 12, keyMode: "raw16" },
+        { name: "iv16+raw16", layout: "ivHead", ivLength: 16, keyMode: "raw16" },
+        { name: "iv12+sha256_16", layout: "ivHead", ivLength: 12, keyMode: "sha256_16" },
+        { name: "iv16+sha256_16", layout: "ivHead", ivLength: 16, keyMode: "sha256_16" },
+
+        // common tool format: salt(16) + iv(12) + ciphertext+tag
+        { name: "salt16+iv12+pbkdf2_10k", layout: "saltIvHead", saltLength: 16, ivLength: 12, keyMode: "pbkdf2_sha256_10000" },
+        { name: "salt16+iv12+pbkdf2_100k", layout: "saltIvHead", saltLength: 16, ivLength: 12, keyMode: "pbkdf2_sha256_100000" },
+
+        // alternate order seen in some implementations: iv(12) + salt(16) + ciphertext+tag
+        { name: "iv12+salt16+pbkdf2_10k", layout: "ivSaltHead", saltLength: 16, ivLength: 12, keyMode: "pbkdf2_sha256_10000" },
+        { name: "iv12+salt16+pbkdf2_100k", layout: "ivSaltHead", saltLength: 16, ivLength: 12, keyMode: "pbkdf2_sha256_100000" }
+    ];
+
+    for (const attempt of attempts) {
+        let iv;
+        let encrypted;
+        let salt = null;
+
+        if (attempt.layout === "ivHead") {
+            if (payload.length <= attempt.ivLength) {
+                continue;
+            }
+            iv = payload.slice(0, attempt.ivLength);
+            encrypted = payload.slice(attempt.ivLength);
+        } else if (attempt.layout === "saltIvHead") {
+            const prefix = attempt.saltLength + attempt.ivLength;
+            if (payload.length <= prefix) {
+                continue;
+            }
+            salt = payload.slice(0, attempt.saltLength);
+            iv = payload.slice(attempt.saltLength, prefix);
+            encrypted = payload.slice(prefix);
+        } else if (attempt.layout === "ivSaltHead") {
+            const prefix = attempt.ivLength + attempt.saltLength;
+            if (payload.length <= prefix) {
+                continue;
+            }
+            iv = payload.slice(0, attempt.ivLength);
+            salt = payload.slice(attempt.ivLength, prefix);
+            encrypted = payload.slice(prefix);
+        } else {
+            continue;
+        }
+
+        try {
+            const key = await importAesGcmKey(password, attempt.keyMode, salt);
+            const plainBuffer = await window.crypto.subtle.decrypt(
+                {
+                    name: "AES-GCM",
+                    iv: iv,
+                    tagLength: 128
+                },
+                key,
+                encrypted
+            );
+
+            console.info("[decrypt] matched format:", attempt.name);
+            return new TextDecoder().decode(plainBuffer).replace(/\u0000+$/g, "");
+        } catch (error) {
+            tried.push(`${attempt.name}: ${error.message}`);
+        }
+    }
+
+    console.error("[decrypt] all AES-GCM attempts failed", tried);
+    return "";
+}
+
+async function importAesGcmKey(password, keyMode, salt = null) {
+    const passwordBytes = new TextEncoder().encode(password);
+
+    if (keyMode === "raw16") {
+        if (passwordBytes.length !== 16) {
+            throw new Error("Password byte length is not 16 for AES-128 raw key");
+        }
+
+        return window.crypto.subtle.importKey(
+            "raw",
+            passwordBytes,
+            { name: "AES-GCM" },
+            false,
+            ["decrypt"]
+        );
+    }
+
+    if (keyMode === "sha256_16") {
+        const digest = await window.crypto.subtle.digest("SHA-256", passwordBytes);
+        const keyBytes = new Uint8Array(digest).slice(0, 16);
+        return window.crypto.subtle.importKey(
+            "raw",
+            keyBytes,
+            { name: "AES-GCM" },
+            false,
+            ["decrypt"]
+        );
+    }
+
+    if (keyMode === "pbkdf2_sha256_10000" || keyMode === "pbkdf2_sha256_100000") {
+        if (!salt || salt.length === 0) {
+            throw new Error("Missing salt for PBKDF2 key derivation");
+        }
+
+        const iterations = keyMode === "pbkdf2_sha256_10000" ? 10000 : 100000;
+        const keyMaterial = await window.crypto.subtle.importKey(
+            "raw",
+            passwordBytes,
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+
+        return window.crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: iterations,
+                hash: "SHA-256"
+            },
+            keyMaterial,
+            { name: "AES-GCM", length: 128 },
+            false,
+            ["decrypt"]
+        );
+    }
+
+    throw new Error("Unsupported key mode");
+}
+
+function base64ToBytes(base64) {
+    const normalized = normalizeBase64(base64);
+    const binary = window.atob(normalized);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return bytes;
+}
+
+function normalizeBase64(value) {
+    let normalized = value.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+
+    const remainder = normalized.length % 4;
+    if (remainder !== 0) {
+        normalized += "=".repeat(4 - remainder);
+    }
+
+    if (!/^[A-Za-z0-9+/=]+$/.test(normalized)) {
+        throw new Error("Invalid Base64 characters in crypto_text_base64");
+    }
+
+    return normalized;
 }
 
 function formatPlaintextForHtml(text) {
@@ -300,36 +464,4 @@ function formatPlaintextForHtml(text) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/\n/g, "<br>");
-}
-
-function decryptCtrZeroPaddingBase64(ciphertextBase64, keyText, ivSetting) {
-    const key = CryptoJS.enc.Utf8.parse(keyText);
-    const iv = buildIvWordArray(ivSetting);
-    const cipherParams = CryptoJS.lib.CipherParams.create({
-        ciphertext: CryptoJS.enc.Base64.parse(ciphertextBase64)
-    });
-
-    const bytes = CryptoJS.AES.decrypt(cipherParams, key, {
-        iv: iv,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.ZeroPadding
-    });
-
-    return bytes.toString(CryptoJS.enc.Utf8).replace(/\u0000+$/g, "");
-}
-
-function buildIvWordArray(ivSetting) {
-    if (ivSetting === "0") {
-        return CryptoJS.enc.Hex.parse("00000000000000000000000000000000");
-    }
-
-    if (/^[0-9a-fA-F]{32}$/.test(ivSetting)) {
-        return CryptoJS.enc.Hex.parse(ivSetting);
-    }
-
-    if (ivSetting.length === 16) {
-        return CryptoJS.enc.Utf8.parse(ivSetting);
-    }
-
-    throw new Error("Invalid IV setting. Use '0', 32-char hex, or 16-char text.");
 }
