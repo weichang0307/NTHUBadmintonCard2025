@@ -28,7 +28,20 @@ animate_prepare(tl_, d1);
 animate_jump(tl_, d2);
 animate_smash(tl_, d3);
 
-document.addEventListener("click", startAnimationOnce, { once: true });
+setupStartListener();
+
+function setupStartListener() {
+    if (name_ === "蕭珮心") {
+        if (!unlockXiaoPeiXinCard()) {
+            const startScreen = document.querySelector(".start-screen");
+            if (startScreen) {
+                startScreen.innerHTML = "password required";
+            }
+            return;
+        }
+    }
+    document.addEventListener("click", startAnimationOnce, { once: true });
+}
 
 function startAnimationOnce() {
     const startScreen = document.querySelector(".start-screen");
@@ -40,6 +53,8 @@ function startAnimationOnce() {
 
 document.querySelector(".to").innerHTML = "To: " + name_;
 document.querySelector(".by").innerHTML = "By: " + "張博崴";
+
+const crypto_text = "U2FsdGVkX1/IRohwl2ivy+i9VXjVXmzYWfFN69VkxyPHNwBR4czFpwsKJ7kkkzwi31X5qynFP9jsAK7QADUlBbzxdHcOeVRmNF50QVjAFPIn3ec+4qhSATeEuOJCqELYmhibngPleJlTFGfoJEsp9uzolxhtRuZEM/wElA4LSjF0vXAd6qxoPKTiPDenwuqlkHD3/E8IxDhiAJbZ9TIz8smTTehKNUj2ffo+xX2tqnTfi5U7MzQ02FEtJMz949ATA8V5yMfIr/8lhRZPxaZSQijpp1rPR+B5GxcDKSYQPdvjqV0BPqXg/ovdildfVhXJYj4e9sRciN3dNxoA5g3tvFDhtKy0/+pL1aUcEp+p+6qy22v5AWS8pn3ymc9PXmDo";
 
 switch (name_) {
     case "楊濟安":
@@ -135,13 +150,14 @@ switch (name_) {
         break;
     case "蕭珮心":
         document.querySelector(".card-body").innerHTML = `
-            畢業快樂！<br>
-            祝一切順利！<br>
+            請先輸入密碼<br>
         `;
         break;
     case "謝昊恩":
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
+            雖然你好像還沒要畢業<br>
+            有空再找你打球<br>
             祝一切順利！<br>
         `;
         break;
@@ -167,12 +183,15 @@ switch (name_) {
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
             祝一切順利！<br>
+            3D列印機記得來拿<br>
+            不然就送我了🙂<br>
         `;
         break;
     case "Vishal Mani":
         document.querySelector(".card-body").innerHTML = `
-            畢業快樂！<br>
-            祝一切順利！<br>
+            Congratulations for graduating!<br>
+            Come back to play with us when you have time!<br>
+            Wishing you all the best!<br>
         `;
         break;
     case "陳信遠":
@@ -184,12 +203,14 @@ switch (name_) {
     case "鄺苡萱":
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
+            敢不敢再來次真心話大冒險🤣（沒<br>
             祝一切順利！<br>
         `;
         break;
     case "張所蓁":
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
+            敢不敢再來次真心話大冒險🤣（沒<br>
             祝一切順利！<br>
         `;
         break;
@@ -197,17 +218,22 @@ switch (name_) {
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
             祝一切順利！<br>
+            也祝你專題順利！<br>
         `;
         break;
     case "劉育如":
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
+            謝謝你揪我們去環島<br>
+            很難忘的回憶~<br>
             祝一切順利！<br>
         `;
         break;
     case "洪元甫":
         document.querySelector(".card-body").innerHTML = `
             畢業快樂！<br>
+            說真的那時候的火柴人到現在都還是我的得意之作<br>
+            👍👍👍<br>
             祝一切順利！<br>
         `;
         break;
@@ -226,4 +252,35 @@ function windowResize() {
         scaleX: w/width,
         scaleY: (h/2 - height/2) / height
     });
+}
+
+function unlockXiaoPeiXinCard() {
+    const password = window.prompt("請輸入密碼");
+    if (!password) {
+        return false;
+    }
+
+    try {
+        const bytes = CryptoJS.AES.decrypt(crypto_text, password);
+        const plaintext = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (!plaintext) {
+            window.alert("密碼錯誤");
+            return false;
+        }
+
+        document.querySelector(".card-body").innerHTML = formatPlaintextForHtml(plaintext);
+        return true;
+    } catch (error) {
+        window.alert("解密失敗");
+        return false;
+    }
+}
+
+function formatPlaintextForHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
 }
